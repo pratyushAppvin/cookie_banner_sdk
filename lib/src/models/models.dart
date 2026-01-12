@@ -6,5 +6,6 @@ export 'cookie_consent.dart';
 export 'cookie_properties.dart';
 export 'device_info.dart';
 export 'language.dart';
+export 'performance_metrics.dart';
 export 'service_properties.dart';
 export 'user_data_properties.dart';

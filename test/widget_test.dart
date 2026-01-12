@@ -1,30 +1,31 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
-import 'package:cookie_banner_sdk/main.dart';
+import 'package:cookie_banner_sdk/src/utils/uuid_helper.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  group('UUID Helper Tests', () {
+    test('generateV4 creates valid UUID v4 format', () {
+      final uuid = UuidHelper.generateV4();
+      
+      // UUID v4 format: xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx
+      final uuidRegex = RegExp(
+        r'^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$',
+        caseSensitive: false,
+      );
+      
+      expect(uuid, matches(uuidRegex));
+      expect(uuid.length, 36);
+      expect(uuid[14], '4'); // Version nibble
+    });
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
-
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
-
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    test('generateV4 creates unique UUIDs', () {
+      final uuid1 = UuidHelper.generateV4();
+      final uuid2 = UuidHelper.generateV4();
+      final uuid3 = UuidHelper.generateV4();
+      
+      expect(uuid1, isNot(equals(uuid2)));
+      expect(uuid2, isNot(equals(uuid3)));
+      expect(uuid1, isNot(equals(uuid3)));
+    });
   });
 }
+

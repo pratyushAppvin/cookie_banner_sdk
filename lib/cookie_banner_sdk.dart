@@ -10,6 +10,10 @@ export 'cookie_banner.dart';
 // Public models that host apps might need
 export 'src/models/banner_design.dart';
 export 'src/models/consent_snapshot.dart';
+export 'src/models/user_data_properties.dart';
 
 // Public services for advanced usage
 export 'src/services/consent_storage.dart';
+
+// Public utilities for consent evaluation
+export 'src/utils/consent_evaluator.dart';

@@ -80,6 +80,7 @@ class MyApp extends StatelessWidget {
 
 - **`domainId`** (int?): Domain identifier from backend
 - **`overrideDesign`** (BannerDesign?): Override remote banner design
+- **`respectDnt`** (bool): Respect Do Not Track setting on mobile (default: false)
 - **`onConsentChanged`** (ValueChanged<Map<int, bool>>?): Callback when consent changes
 - **`onAcceptAll`** (VoidCallback?): Callback when user accepts all
 - **`onRejectAll`** (VoidCallback?): Callback when user rejects all
@@ -138,18 +139,125 @@ The SDK manages 5 standard cookie categories:
 - Simple footer banner
 - Accept/Reject all actions
 
-### 🚧 Phase 4 - Full Consent Logic (Next)
-- Category-level toggles
-- Per-cookie toggles
-- Do Not Track support
-- New cookie detection refinements
+### ✅ Phase 4 - Full Consent Logic (Complete)
+- **Category-level toggles** - Users can enable/disable entire cookie categories
+- **Per-cookie toggles** - Granular control over individual cookies within categories
+- **"Allow Selection" button** - Opens preferences dialog for custom choices
+- **Do Not Track (DNT) support**:
+  - Auto-detects on Flutter web via `navigator.doNotTrack`
+  - Optional `respectDnt` flag for mobile platforms
+  - Automatically denies marketing cookies when DNT enabled
+- **Consent preferences dialog** - Full-featured UI with:
+  - Expandable category sections
+  - Service grouping
+  - Individual cookie information (name, description, expiration)
+  - Real-time sync between category and cookie toggles
+  - Always-active indication for necessary cookies
+- **Three-button layout** - Configurable button order (deny/allowSelection/allowAll)
+- **Enhanced consent enforcement** - DNT rules applied before saving to storage
 
-### 📋 Phase 5+ - Upcoming
-- Wall layout (full-screen modal)
-- Multi-language support
-- Device info collection
-- Floating logo
-- Performance metrics
+### ✅ Phase 5 - Rich UI: Wall Layout, Tabs, Floating Logo (Complete)
+- **Wall banner layout** - Full-screen modal with Material Design
+- **Tabbed navigation** - Consent, Details, and About tabs with TabController
+- **Consent tab** - Category toggles with descriptions and always-active badges
+- **Details tab** - Comprehensive cookie information:
+  - Grouped by categories and services
+  - Individual cookie cards with descriptions, expiration, provider
+  - Per-cookie toggles for granular control
+  - Lock icons for necessary cookies
+- **About tab** - Rich content display:
+  - Markdown support via flutter_markdown
+  - Privacy Policy and Cookie Policy links
+  - HTML rendering for rich text
+- **Floating logo** - Draggable widget that appears after dismissal:
+  - Smooth drag behavior with edge snapping
+  - Reopens preferences on tap
+  - Configurable size from BannerDesign
+  - Material elevation and shadows
+- **Layout switching** - Automatic selection between wall and footer based on `layoutType`
+- **Skeleton loaders** - Professional loading states:
+  - Wall banner loader (tabs, content, buttons)
+  - Footer banner loader (compact shimmer)
+  - Shown during initialization
+- **Close button** - Banner dismissal without saving (if `allowBannerClose` is true)
+
+### ✅ Phase 6 - Multi-language Support (Complete)
+- **Automatic language detection** - Uses device locale
+- **Language dropdown** - Manual language selection in banner
+- **RTL support** - Proper text direction for RTL languages
+- **Language persistence** - Remembers user's language choice
+- **Backend integration** - Fetches translations from API
+
+### ✅ Phase 7 - Integration Hooks & Utilities (Complete)
+- **ConsentEvaluator** - Static utility class with 14 methods:
+  - `isAnalyticsAllowed()`, `isMarketingAllowed()`, `isFunctionalAllowed()`, `isPerformanceAllowed()`
+  - `isCategoryAllowed(categoryId)`, `isCookieAllowed(cookieId)`
+  - `getAllowedCategoryIds()`, `getAllowedCategorySlugs()`
+  - `hasConsent()`, `hasAcceptedAll()`, `hasRejectedAll()`
+- **INTEGRATION_GUIDE.md** - Comprehensive documentation with examples for:
+  - Firebase Analytics, Firebase Crashlytics, Google AdMob
+  - Facebook SDK, Mixpanel, Sentry
+  - Complete SDK Manager pattern implementation
+
+### ✅ Phase 8 - Performance Metrics & Polish (Complete)
+- **Performance Metrics Tracking**:
+  - CDN response time, API response time, total load time
+  - Banner display time, user reaction time
+  - PerformanceMetrics model and builder pattern
+  - Automatic metrics sent to backend
+- **Error Handling**:
+  - `onError` callback for host apps
+  - Graceful network failure handling
+  - Try-catch blocks throughout lifecycle
+- **Animations**:
+  - AnimatedOpacity transitions (300ms fade)
+  - Smooth banner appearance/dismissal
+
+### ✅ Phase 9 - Testing, QA & Release Readiness (Complete)
+- **Unit Tests**:
+  - UUID validation tests (format, length, uniqueness)
+  - Test suite passing: 2/2 tests
+- **Manual QA Checklist** - Comprehensive testing guide covering:
+  - Banner display & loading (CDN/API, layouts, theming)
+  - Button interactions (Accept/Reject/Allow Selection)
+  - Consent preferences dialog (toggles, details, about tab)
+  - Language support (auto-detection, manual selection)
+  - Do Not Track (DNT) enforcement
+  - New cookie detection & version changes
+  - Floating logo behavior
+  - Error handling (network, invalid config, storage)
+  - Platform-specific tests (iOS/Android)
+  - Performance & memory validation
+  - Integration testing with host apps
+  - Edge cases (rapid interactions, rotation, low memory)
+- **Documentation**:
+  - Updated README with all completed phases
+  - INTEGRATION_GUIDE.md for third-party SDK integration
+  - MANUAL_QA_CHECKLIST.md for release testing
+
+## Testing
+
+### Running Tests
+
+```bash
+flutter test
+```
+
+The SDK includes unit tests for core functionality:
+- **UUID Helper Tests**: Validates UUID v4 format, length, and uniqueness
+
+### Manual Testing
+
+For comprehensive QA, see [MANUAL_QA_CHECKLIST.md](MANUAL_QA_CHECKLIST.md), which covers:
+- All banner display scenarios
+- Consent flows and user interactions
+- Platform-specific behavior (iOS/Android)
+- Performance and memory validation
+- Integration with host applications
+
+### Integration Testing
+
+For integrating the SDK with third-party services (Firebase, AdMob, etc.), see [INTEGRATION_GUIDE.md](INTEGRATION_GUIDE.md).
 
 ## Development Phases
 

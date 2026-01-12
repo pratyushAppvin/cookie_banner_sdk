@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import '../models/banner_design.dart';
+import '../models/language.dart';
+import 'language_selector.dart';
 
-/// Simple footer banner widget with Accept/Reject buttons.
+/// Simple footer banner widget with Accept/Reject/Allow Selection buttons.
 ///
 /// Displays a fixed bottom banner with banner title, description,
 /// and action buttons. Respects safe areas on mobile devices.
@@ -11,6 +13,10 @@ class FooterBanner extends StatelessWidget {
   final String description;
   final VoidCallback onAcceptAll;
   final VoidCallback onRejectAll;
+  final VoidCallback? onAllowSelection;
+  final List<Language> availableLanguages;
+  final String selectedLanguageCode;
+  final ValueChanged<String> onLanguageChanged;
 
   const FooterBanner({
     super.key,
@@ -19,6 +25,10 @@ class FooterBanner extends StatelessWidget {
     required this.description,
     required this.onAcceptAll,
     required this.onRejectAll,
+    this.onAllowSelection,
+    required this.availableLanguages,
+    required this.selectedLanguageCode,
+    required this.onLanguageChanged,
   });
 
   Color _parseColor(String colorString, Color fallback) {
@@ -59,6 +69,10 @@ class FooterBanner extends StatelessWidget {
     // Check which buttons to show
     final showDeny = design.buttons?.deny ?? true;
     final showAllowAll = design.buttons?.allowAll ?? true;
+    final showAllowSelection = design.buttons?.allowSelection ?? true;
+    
+    // Get button order
+    final buttonOrder = design.buttonOrder ?? ['deny', 'allowSelection', 'allowAll'];
 
     return Positioned(
       left: 0,
@@ -80,6 +94,24 @@ class FooterBanner extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Language selector (if enabled)
+                if (design.showLanguageDropdown && availableLanguages.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        LanguageSelector(
+                          languages: availableLanguages,
+                          selectedLanguageCode: selectedLanguageCode,
+                          onLanguageChanged: onLanguageChanged,
+                          textColor: textColor,
+                          dropdownColor: backgroundColor,
+                        ),
+                      ],
+                    ),
+                  ),
+
                 // Title
                 if (title.isNotEmpty)
                   Text(
@@ -108,61 +140,102 @@ class FooterBanner extends StatelessWidget {
                 
                 const SizedBox(height: 16),
                 
-                // Buttons
-                Row(
-                  children: [
-                    if (showDeny) ...[
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: onRejectAll,
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: buttonColor,
-                            side: BorderSide(color: buttonColor, width: 2),
-                            padding: const EdgeInsets.symmetric(
-                              vertical: 12,
-                              horizontal: 16,
+                // Buttons in configured order
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: buttonOrder.map((buttonType) {
+                    switch (buttonType) {
+                      case 'deny':
+                        if (!showDeny) return const SizedBox.shrink();
+                        return SizedBox(
+                          width: buttonOrder.length == 1 ? double.infinity : null,
+                          child: OutlinedButton(
+                            onPressed: onRejectAll,
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: buttonColor,
+                              side: BorderSide(color: buttonColor, width: 2),
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 12,
+                                horizontal: 16,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(6),
+                              ),
                             ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                          ),
-                          child: Text(
-                            design.denyButtonLabel,
-                            style: TextStyle(
-                              fontFamily: design.fontFamily,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                    ],
-                    
-                    if (showAllowAll)
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: onAcceptAll,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: buttonColor,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(
-                              vertical: 12,
-                              horizontal: 16,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(6),
+                            child: Text(
+                              design.denyButtonLabel,
+                              style: TextStyle(
+                                fontFamily: design.fontFamily,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 13,
+                              ),
                             ),
                           ),
-                          child: Text(
-                            design.allowAllButtonLabel,
-                            style: TextStyle(
-                              fontFamily: design.fontFamily,
-                              fontWeight: FontWeight.w600,
+                        );
+                      
+                      case 'allowSelection':
+                        if (!showAllowSelection || onAllowSelection == null) {
+                          return const SizedBox.shrink();
+                        }
+                        return SizedBox(
+                          width: buttonOrder.length == 1 ? double.infinity : null,
+                          child: OutlinedButton(
+                            onPressed: onAllowSelection,
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: textColor,
+                              side: BorderSide(color: textColor.withOpacity(0.5), width: 1.5),
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 12,
+                                horizontal: 16,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                            ),
+                            child: Text(
+                              design.allowSelectionButtonLabel,
+                              style: TextStyle(
+                                fontFamily: design.fontFamily,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 13,
+                              ),
                             ),
                           ),
-                        ),
-                      ),
-                  ],
+                        );
+                      
+                      case 'allowAll':
+                        if (!showAllowAll) return const SizedBox.shrink();
+                        return SizedBox(
+                          width: buttonOrder.length == 1 ? double.infinity : null,
+                          child: ElevatedButton(
+                            onPressed: onAcceptAll,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: buttonColor,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 12,
+                                horizontal: 16,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                            ),
+                            child: Text(
+                              design.allowAllButtonLabel,
+                              style: TextStyle(
+                                fontFamily: design.fontFamily,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
+                        );
+                      
+                      default:
+                        return const SizedBox.shrink();
+                    }
+                  }).toList(),
                 ),
               ],
             ),

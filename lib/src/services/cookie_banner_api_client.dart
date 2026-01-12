@@ -167,7 +167,13 @@ class CookieBannerApiClient {
     required int domainId,
     required String subjectIdentity,
     required String domainUrl,
-    required double responseTime,
+    int? cdnResponseTime,
+    int? apiResponseTime,
+    int? totalLoadTime,
+    int? bannerDisplayTime,
+    int? userReactionTime,
+    String loadMethod = 'cdn',
+    DeviceInfoData? deviceInfo,
   }) async {
     try {
       final url = Uri.parse('$baseUrl/ucm/v2/banner/load-time');
@@ -176,7 +182,13 @@ class CookieBannerApiClient {
         'domain_id': domainId,
         'subject_identity': subjectIdentity,
         'domain_url': domainUrl,
-        'response_time': responseTime,
+        if (cdnResponseTime != null) 'cdn_response_time': cdnResponseTime,
+        if (apiResponseTime != null) 'api_response_time': apiResponseTime,
+        if (totalLoadTime != null) 'total_load_time': totalLoadTime,
+        if (bannerDisplayTime != null) 'banner_display_time': bannerDisplayTime,
+        if (userReactionTime != null) 'user_reaction_time': userReactionTime,
+        'load_method': loadMethod,
+        if (deviceInfo != null) 'device_info': deviceInfo.toJson(),
       };
 
       final response = await httpClient!.post(
