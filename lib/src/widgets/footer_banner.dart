@@ -74,40 +74,52 @@ class FooterBanner extends StatelessWidget {
     // Get button order
     final buttonOrder = design.buttonOrder ?? ['deny', 'allowSelection', 'allowAll'];
 
-    return Positioned(
-      left: 0,
-      right: 0,
-      bottom: 0,
-      child: Material(
-        elevation: 8,
-        color: backgroundColor,
-        child: SafeArea(
-          top: false,
-          child: Container(
-            padding: EdgeInsets.only(
-              left: 16,
-              right: 16,
-              top: 16,
-              bottom: 16 + (bottomPadding > 0 ? 0 : 8),
-            ),
-            child: Column(
+    return Material(
+      elevation: 8,
+      color: backgroundColor,
+      child: SafeArea(
+        top: false,
+        child: Container(
+          padding: EdgeInsets.only(
+            left: 16,
+            right: 16,
+            top: 16,
+            bottom: 16 + (bottomPadding > 0 ? 0 : 8),
+          ),
+          child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Language selector (if enabled)
-                if (design.showLanguageDropdown && availableLanguages.isNotEmpty)
+                // Header row with logo and language selector
+                if (design.showLogo == 'true' && design.logoUrl.isNotEmpty || 
+                    design.showLanguageDropdown)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 12),
                     child: Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
                       children: [
-                        LanguageSelector(
-                          languages: availableLanguages,
-                          selectedLanguageCode: selectedLanguageCode,
-                          onLanguageChanged: onLanguageChanged,
-                          textColor: textColor,
-                          dropdownColor: backgroundColor,
-                        ),
+                        // Logo
+                        if (design.showLogo == 'true' && design.logoUrl.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(right: 12),
+                            child: Image.network(
+                              design.logoUrl,
+                              width: double.tryParse(design.logoSize.width.replaceAll('px', '')) ?? 50,
+                              height: double.tryParse(design.logoSize.height.replaceAll('px', '')) ?? 50,
+                              errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
+                            ),
+                          ),
+                        
+                        const Spacer(),
+                        
+                        // Language selector
+                        if (design.showLanguageDropdown && availableLanguages.isNotEmpty)
+                          LanguageSelector(
+                            languages: availableLanguages,
+                            selectedLanguageCode: selectedLanguageCode,
+                            onLanguageChanged: onLanguageChanged,
+                            textColor: textColor,
+                            dropdownColor: backgroundColor,
+                          ),
                       ],
                     ),
                   ),
@@ -241,7 +253,6 @@ class FooterBanner extends StatelessWidget {
             ),
           ),
         ),
-      ),
-    );
+      );
   }
 }

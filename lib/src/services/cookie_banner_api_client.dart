@@ -30,13 +30,21 @@ class CookieBannerApiClient {
     required int domainId,
   }) async {
     try {
-      final fileName = '${domainUrl}_$domainId.json';
+      // Sanitize domainUrl: remove all slashes to match React implementation
+      final sanitizedDomain = domainUrl.replaceAll('/', '').replaceAll('\\', '');
+      final fileName = '${sanitizedDomain}_$domainId.json';
       final url = Uri.parse('$cdnBaseUrl/$fileName');
+      print("line 35 $url");
 
       final response = await httpClient!.get(url);
 
       if (response.statusCode == 200) {
-        final List<dynamic> jsonList = jsonDecode(response.body) as List;
+        final responseJson = jsonDecode(response.body) as Map<String, dynamic>;
+        
+        // Extract data array from result.data structure
+        final result = responseJson['result'] as Map<String, dynamic>?;
+        final List<dynamic> jsonList = (result?['data'] ?? responseJson) as List;
+        
         return jsonList
             .map((json) =>
                 UserDataProperties.fromJson(json as Map<String, dynamic>))
@@ -97,6 +105,7 @@ class CookieBannerApiClient {
           'domain_id': domainId.toString(),
         },
       );
+      print("from line 108 $url");
 
       final response = await httpClient!.get(url);
 

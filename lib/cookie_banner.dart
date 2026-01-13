@@ -129,12 +129,27 @@ class _CookieBannerState extends State<CookieBanner> {
 
       // 6. Fetch available languages
       await _fetchLanguages();
+      print('🌐 Available languages fetched: ${_availableLanguages.length}');
+      if (_availableLanguages.isNotEmpty) {
+        print('   Languages: ${_availableLanguages.map((l) => l.languageCode).join(", ")}');
+      }
 
       // 7. Auto-detect language if enabled
       _autoDetectLanguage();
 
       // 8. Set user data based on selected language
       _updateUserDataForLanguage();
+      
+      // Debug banner configuration
+      final design = widget.overrideDesign ?? _userData?.bannerConfiguration.bannerDesign;
+      if (design != null) {
+        print('🎨 Banner Design Configuration:');
+        print('   Layout Type: ${design.layoutType}');
+        print('   Show Logo: "${design.showLogo}"');
+        print('   Logo URL: "${design.logoUrl}"');
+        print('   Show Language Dropdown: ${design.showLanguageDropdown}');
+        print('   Allow Banner Close: ${design.allowBannerClose}');
+      }
 
       // 9. Decide whether to show banner
       final needsConsent = ConsentHelpers.needsReconsent(
@@ -265,7 +280,8 @@ class _CookieBannerState extends State<CookieBanner> {
     try {
       _availableLanguages = await _apiClient.fetchLanguages(domainId: domainId);
     } catch (e) {
-      print('Language fetch failed: $e');
+      print('⚠️ Language fetch failed: $e');
+      print('   This might require authentication. Language selector will be hidden.');
       _availableLanguages = [];
     }
   }
@@ -522,45 +538,51 @@ class _CookieBannerState extends State<CookieBanner> {
       children: [
         // Main banner (wall or footer based on layoutType) with animation
         if (_isVisible)
-          AnimatedOpacity(
-            opacity: _isVisible ? 1.0 : 0.0,
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeInOut,
-            child: design.layoutType == 'wall'
-                ? WallBanner(
-                    design: design,
-                    userData: _userData!,
-                    categoryConsent: _categoryConsent,
-                    userConsent: _userConsent,
-                    onAcceptAll: _handleAcceptAll,
-                    onRejectAll: _handleRejectAll,
-                    onAllowSelection: _handleAllowSelection,
-                    onClose: design.allowBannerClose ? _handleBannerClose : null,
-                    onCategoryConsentChanged: (consent) {
-                      setState(() {
-                        _categoryConsent = consent;
-                      });
-                    },
-                    onCookieConsentChanged: (consent) {
-                      setState(() {
-                        _userConsent = consent;
-                      });
-                    },
-                    availableLanguages: _availableLanguages,
-                    selectedLanguageCode: _selectedLanguageCode,
-                    onLanguageChanged: _onLanguageChanged,
-                  )
-                : FooterBanner(
-                    design: design,
-                    title: _userData!.bannerTitle,
-                    description: _userData!.bannerDescription,
-                    onAcceptAll: _handleAcceptAll,
-                    onRejectAll: _handleRejectAll,
-                    onAllowSelection: _handleAllowSelection,
-                    availableLanguages: _availableLanguages,
-                    selectedLanguageCode: _selectedLanguageCode,
-                    onLanguageChanged: _onLanguageChanged,
-                  ),
+          Positioned(
+            left: design.layoutType == 'wall' ? 0 : 0,
+            right: design.layoutType == 'wall' ? 0 : 0,
+            bottom: design.layoutType == 'wall' ? 0 : 0,
+            top: design.layoutType == 'wall' ? 0 : null,
+            child: AnimatedOpacity(
+              opacity: _isVisible ? 1.0 : 0.0,
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeInOut,
+              child: design.layoutType == 'wall'
+                  ? WallBanner(
+                      design: design,
+                      userData: _userData!,
+                      categoryConsent: _categoryConsent,
+                      userConsent: _userConsent,
+                      onAcceptAll: _handleAcceptAll,
+                      onRejectAll: _handleRejectAll,
+                      onAllowSelection: _handleAllowSelection,
+                      onClose: design.allowBannerClose ? _handleBannerClose : null,
+                      onCategoryConsentChanged: (consent) {
+                        setState(() {
+                          _categoryConsent = consent;
+                        });
+                      },
+                      onCookieConsentChanged: (consent) {
+                        setState(() {
+                          _userConsent = consent;
+                        });
+                      },
+                      availableLanguages: _availableLanguages,
+                      selectedLanguageCode: _selectedLanguageCode,
+                      onLanguageChanged: _onLanguageChanged,
+                    )
+                  : FooterBanner(
+                      design: design,
+                      title: _userData!.bannerTitle,
+                      description: _userData!.bannerDescription,
+                      onAcceptAll: _handleAcceptAll,
+                      onRejectAll: _handleRejectAll,
+                      onAllowSelection: _handleAllowSelection,
+                      availableLanguages: _availableLanguages,
+                      selectedLanguageCode: _selectedLanguageCode,
+                      onLanguageChanged: _onLanguageChanged,
+                    ),
+            ),
           ),
 
         // Floating logo (appears after banner is dismissed)

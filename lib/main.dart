@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cookie_banner_sdk/cookie_banner_sdk.dart';
 
 void main() {
   runApp(const MyApp());
@@ -7,116 +8,407 @@ void main() {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Cookie Banner',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+        useMaterial3: true,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: const CookieBannerDemoPage(),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
+class CookieBannerDemoPage extends StatefulWidget {
+  const CookieBannerDemoPage({super.key});
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<CookieBannerDemoPage> createState() => _CookieBannerDemoPageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+class _CookieBannerDemoPageState extends State<CookieBannerDemoPage> {
+  ConsentSnapshot? _currentConsent;
+  String _statusMessage = 'No consent given yet';
+  final _storage = SharedPreferencesConsentStorage();
 
-  void _incrementCounter() {
+  @override
+  void initState() {
+    super.initState();
+    _loadStoredConsent();
+  }
+
+  Future<void> _loadStoredConsent() async {
+    final consent = await _storage.loadConsent();
     setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
+      _currentConsent = consent;
+      if (consent != null) {
+        _statusMessage = 'Consent loaded from storage';
+      }
     });
+  }
+
+  Future<void> _clearConsent() async {
+    await _storage.clearConsent();
+    setState(() {
+      _currentConsent = null;
+      _statusMessage = 'Consent cleared - banner will show on restart';
+    });
+    
+    // Show snackbar
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Consent cleared! Restart the app to see the banner again.'),
+          duration: Duration(seconds: 3),
+        ),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
     return Scaffold(
       appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
+        title: const Text('Cookie Banner Demo'),
+        elevation: 2,
       ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
+      body: Stack(
+        children: [
+          // Main content
+          SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Status Card
+                Card(
+                  elevation: 2,
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(
+                              _currentConsent != null
+                                  ? Icons.check_circle
+                                  : Icons.info_outline,
+                              color: _currentConsent != null
+                                  ? Colors.green
+                                  : Colors.orange,
+                            ),
+                            const SizedBox(width: 8),
+                            const Text(
+                              'Consent Status',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          _statusMessage,
+                          style: TextStyle(
+                            color: Colors.grey[700],
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                
+                const SizedBox(height: 24),
+
+                // Current Consent Details
+                if (_currentConsent != null) ...[
+                  const Text(
+                    'Current Consent Preferences',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  
+                  _buildConsentCard(
+                    'Necessary Cookies',
+                    ConsentEvaluator.isNecessaryAllowed(_currentConsent),
+                    'Always enabled for core functionality',
+                    Icons.security,
+                  ),
+                  _buildConsentCard(
+                    'Analytics Cookies',
+                    ConsentEvaluator.isAnalyticsAllowed(_currentConsent),
+                    'Used to understand how you use our app',
+                    Icons.analytics,
+                  ),
+                  _buildConsentCard(
+                    'Marketing Cookies',
+                    ConsentEvaluator.isMarketingAllowed(_currentConsent),
+                    'Used to show you relevant advertisements',
+                    Icons.campaign,
+                  ),
+                  _buildConsentCard(
+                    'Functional Cookies',
+                    ConsentEvaluator.isFunctionalAllowed(_currentConsent),
+                    'Enable enhanced features and personalization',
+                    Icons.extension,
+                  ),
+                  _buildConsentCard(
+                    'Performance Cookies',
+                    ConsentEvaluator.isPerformanceAllowed(_currentConsent),
+                    'Help us improve app performance',
+                    Icons.speed,
+                  ),
+                  
+                  const SizedBox(height: 24),
+                  
+                  // Consent Summary
+                  Card(
+                    color: Colors.blue[50],
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Consent Summary',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          _buildSummaryRow(
+                            'Total Categories',
+                            '5',
+                          ),
+                          _buildSummaryRow(
+                            'Allowed Categories',
+                            ConsentEvaluator.getAllowedCategorySlugs(_currentConsent)
+                                .length
+                                .toString(),
+                          ),
+                          _buildSummaryRow(
+                            'Allowed Cookies',
+                            ConsentEvaluator.getAllowedCookieIds(_currentConsent)
+                                .length
+                                .toString(),
+                          ),
+                          _buildSummaryRow(
+                            'Status',
+                            ConsentEvaluator.hasAcceptedAll(_currentConsent)
+                                ? 'Accepted All'
+                                : ConsentEvaluator.hasRejectedAll(_currentConsent)
+                                    ? 'Rejected All (Necessary Only)'
+                                    : 'Custom Selection',
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  
+                  const SizedBox(height: 24),
+                  
+                  // Clear Consent Button
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: _clearConsent,
+                      icon: const Icon(Icons.delete_outline),
+                      label: const Text('Clear Consent & Show Banner Again'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                      ),
+                    ),
+                  ),
+                ] else ...[
+                  const Card(
+                    child: Padding(
+                      padding: EdgeInsets.all(16),
+                      child: Column(
+                        children: [
+                          Icon(Icons.cookie, size: 48, color: Colors.grey),
+                          SizedBox(height: 16),
+                          Text(
+                            'No Consent Given Yet',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          SizedBox(height: 8),
+                          Text(
+                            'The cookie banner will appear on first launch.\nInteract with it to save your preferences.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(color: Colors.grey),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+                
+                const SizedBox(height: 24),
+                
+                // Information Card
+                Card(
+                  color: Colors.green[50],
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(Icons.info, color: Colors.green[700]),
+                            const SizedBox(width: 8),
+                            const Text(
+                              'How to Test',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        const Text('1. Configure your domainUrl, environment, and domainId in the CookieBanner widget below'),
+                        const SizedBox(height: 8),
+                        const Text('2. The banner appears on first launch or when consent is cleared'),
+                        const SizedBox(height: 8),
+                        const Text('3. Click "Accept All", "Reject All", or "Allow Selection" to customize'),
+                        const SizedBox(height: 8),
+                        const Text('4. Your preferences are saved and displayed above'),
+                        const SizedBox(height: 8),
+                        const Text('5. Click "Clear Consent" to reset and see the banner again'),
+                      ],
+                    ),
+                  ),
+                ),
+                
+                const SizedBox(height: 100), // Space for banner
+              ],
             ),
-          ],
+          ),
+          
+          // Cookie Banner Widget
+          CookieBanner(
+            // CONFIGURE THESE VALUES FOR YOUR DOMAIN
+            domainUrl: 'https://www.gotrust.tech/',  // Replace with your domain
+            environment: 'https://dev.gotrust.tech',  // Your API base URL
+            domainId: 198,  // Replace with your domain ID
+            
+            // Optional: Respect Do Not Track
+            respectDnt: false,
+            
+            // Callback when consent changes
+            onConsentChanged: (consentByCategory) {
+              setState(() {
+                _statusMessage = 'Consent updated!';
+                _loadStoredConsent(); // Reload to show new consent
+              });
+              
+              // Here you would typically enable/disable your tracking SDKs
+              print('📊 Consent changed: $consentByCategory');
+              
+              // Example: Enable analytics if allowed
+              if (consentByCategory[2] == true) { // Assuming category 2 is analytics
+                print('✅ Analytics enabled');
+                // await FirebaseAnalytics.instance.setAnalyticsCollectionEnabled(true);
+              }
+            },
+            
+            // Callback when user accepts all
+            onAcceptAll: () {
+              print('✅ User accepted all cookies');
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('All cookies accepted!'),
+                  backgroundColor: Colors.green,
+                  duration: Duration(seconds: 2),
+                ),
+              );
+            },
+            
+            // Callback when user rejects all
+            onRejectAll: () {
+              print('❌ User rejected all non-necessary cookies');
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Only necessary cookies enabled'),
+                  backgroundColor: Colors.orange,
+                  duration: Duration(seconds: 2),
+                ),
+              );
+            },
+            
+            // Callback for errors
+            onError: (error) {
+              print('⚠️ Cookie banner error: $error');
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Banner error: $error'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildConsentCard(String title, bool isAllowed, String description, IconData icon) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: ListTile(
+        leading: Icon(
+          icon,
+          color: isAllowed ? Colors.green : Colors.grey,
+        ),
+        title: Text(
+          title,
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+        subtitle: Text(description),
+        trailing: Icon(
+          isAllowed ? Icons.check_circle : Icons.cancel,
+          color: isAllowed ? Colors.green : Colors.red,
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+    );
+  }
+
+  Widget _buildSummaryRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(fontSize: 14),
+          ),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

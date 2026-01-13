@@ -14,6 +14,7 @@ export 'src/models/user_data_properties.dart';
 
 // Public services for advanced usage
 export 'src/services/consent_storage.dart';
+export 'src/services/shared_preferences_consent_storage.dart';
 
 // Public utilities for consent evaluation
 export 'src/utils/consent_evaluator.dart';
