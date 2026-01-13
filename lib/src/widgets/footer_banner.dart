@@ -96,6 +96,7 @@ class FooterBanner extends StatelessWidget {
                   Padding(
                     padding: const EdgeInsets.only(bottom: 12),
                     child: Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
                       children: [
                         // Logo
                         if (design.showLogo == 'true' && design.logoUrl.isNotEmpty)
@@ -108,9 +109,7 @@ class FooterBanner extends StatelessWidget {
                               errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
                             ),
                           ),
-                        
                         const Spacer(),
-                        
                         // Language selector
                         if (design.showLanguageDropdown && availableLanguages.isNotEmpty)
                           LanguageSelector(
@@ -120,6 +119,9 @@ class FooterBanner extends StatelessWidget {
                             textColor: textColor,
                             dropdownColor: backgroundColor,
                           ),
+                        SizedBox(width: 10,),
+                        if(design.allowBannerClose)
+                          Icon(Icons.close, color: Colors.black,),
                       ],
                     ),
                   ),

@@ -1,4 +1,6 @@
 import 'dart:convert';
+import 'dart:math';
+import 'package:flutter/cupertino.dart';
 import 'package:http/http.dart' as http;
 import '../models/models.dart';
 
@@ -39,15 +41,84 @@ class CookieBannerApiClient {
       final response = await httpClient!.get(url);
 
       if (response.statusCode == 200) {
-        final responseJson = jsonDecode(response.body) as Map<String, dynamic>;
-        
-        // Extract data array from result.data structure
-        final result = responseJson['result'] as Map<String, dynamic>?;
-        final List<dynamic> jsonList = (result?['data'] ?? responseJson) as List;
-        
-        return jsonList
-            .map((json) =>
-                UserDataProperties.fromJson(json as Map<String, dynamic>))
+        final decoded = jsonDecode(response.body);
+
+        // Debug: Print the response structure
+        print('📦 CDN Response type: ${decoded.runtimeType}');
+
+        List<dynamic> jsonList;
+
+        // Handle different response formats:
+        // 1. Direct array: [...]
+        // 2. Nested in result.data: {"success": true, "result": {"data": [...]}}
+        // 3. Direct data property: {"data": [...]}
+
+        if (decoded is List) {
+          // Format 1: Direct array
+          jsonList = decoded;
+          print('   Format: Direct array with ${jsonList.length} items');
+        } else if (decoded is Map<String, dynamic>) {
+          // Check for nested result.data structure
+          final result = decoded['result'];
+          if (result is Map<String, dynamic> && result['data'] is List) {
+            // Format 2: Nested in result.data
+            jsonList = result['data'] as List;
+            print('   Format: Nested result.data with ${jsonList.length} items');
+          } else if (decoded['data'] is List) {
+            // Format 3: Direct data property
+            jsonList = decoded['data'] as List;
+            print('   Format: Direct data property with ${jsonList.length} items');
+          } else {
+            // Format 4: Single object (wrap in array)
+            jsonList = [decoded];
+            print('   Format: Single object (wrapped in array)');
+          }
+        } else {
+          throw CookieBannerApiException(
+            'Unexpected CDN response format: ${decoded.runtimeType}',
+            null,
+          );
+        }
+
+        // Debug: Print the actual data structure
+        print('   Parsing ${jsonList.length} regulation items...');
+
+        // Extract language objects from regulation items
+        final List<Map<String, dynamic>> languageObjects = [];
+
+        for (var i = 0; i < jsonList.length; i++) {
+          final item = jsonList[i];
+          if (item is Map<String, dynamic>) {
+            // Check if this is a regulation object with languages array
+            if (item['languages'] is List) {
+              final languages = item['languages'] as List;
+              print('   Regulation $i has ${languages.length} language(s)');
+              for (var lang in languages) {
+                if (lang is Map<String, dynamic>) {
+                  languageObjects.add(lang);
+                }
+              }
+            } else {
+              // Direct language object (backward compatibility)
+              languageObjects.add(item);
+            }
+          }
+        }
+
+        print('   Total language objects to parse: ${languageObjects.length}');
+
+        return languageObjects
+            .asMap()
+            .entries
+            .map((entry) {
+              try {
+                return UserDataProperties.fromJson(entry.value);
+              } catch (e) {
+                print('❌ Error parsing language object ${entry.key}: $e');
+                print('   Keys: ${entry.value.keys.take(10).join(", ")}');
+                rethrow;
+              }
+            })
             .toList();
       } else {
         throw CookieBannerApiException(
@@ -77,12 +148,17 @@ class CookieBannerApiClient {
         },
       );
 
+      print('🔄 Fallback API URL: $url');
+
       final response = await httpClient!.get(url);
+
+      print('   Status: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         final json = jsonDecode(response.body) as Map<String, dynamic>;
         return UserDataProperties.fromJson(json);
       } else {
+        print('   Response body: ${response.body}');
         throw CookieBannerApiException(
           'Fallback API fetch failed',
           response.statusCode,
