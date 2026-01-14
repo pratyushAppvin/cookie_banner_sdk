@@ -215,11 +215,12 @@ class _WallBannerState extends State<WallBanner> with SingleTickerProviderStateM
               ),
             ),
 
-          // Close button
-          if (widget.design.allowBannerClose && widget.onClose != null)
+          // Close button (follows Reject All functionality)
+          if (widget.design.allowBannerClose)
             IconButton(
               icon: Icon(Icons.close, color: fontColor),
-              onPressed: widget.onClose,
+              onPressed: widget.onRejectAll,
+              tooltip: 'Close',
             ),
         ],
       ),
@@ -650,6 +651,12 @@ class _WallBannerState extends State<WallBanner> with SingleTickerProviderStateM
     final buttonsCfg = widget.design.buttons ?? BannerButtons(deny: true, allowSelection: true, allowAll: true);
     final buttonOrder = widget.design.buttonOrder ?? ['deny', 'allowSelection', 'allowAll'];
 
+    // Count visible buttons
+    final visibleButtons = <String>[];
+    if (buttonsCfg.deny) visibleButtons.add('deny');
+    if (buttonsCfg.allowSelection && widget.onAllowSelection != null) visibleButtons.add('allowSelection');
+    if (buttonsCfg.allowAll) visibleButtons.add('allowAll');
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -666,86 +673,111 @@ class _WallBannerState extends State<WallBanner> with SingleTickerProviderStateM
         ],
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: buttonOrder.map((buttonType) {
+        children: buttonOrder.where((type) => visibleButtons.contains(type)).map((buttonType) {
+          final isLast = buttonType == buttonOrder.where((t) => visibleButtons.contains(t)).last;
+          
+          Widget button;
           switch (buttonType) {
             case 'deny':
-              if (!(buttonsCfg.deny)) return const SizedBox.shrink();
-              return Padding(
-                padding: const EdgeInsets.only(left: 8),
-                child: OutlinedButton(
-                  onPressed: widget.onRejectAll,
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: buttonColor,
-                    side: BorderSide(color: buttonColor, width: 2),
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 14,
-                      horizontal: 24,
-                    ),
+              button = OutlinedButton(
+                onPressed: widget.onRejectAll,
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: buttonColor,
+                  side: BorderSide(color: buttonColor, width: 2),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 12,
+                    horizontal: 8,
                   ),
+                  minimumSize: const Size(0, 44),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                ),
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
                   child: Text(
                     widget.design.denyButtonLabel,
                     style: TextStyle(
+                      fontSize: 12,
                       fontFamily: widget.design.fontFamily,
                       fontWeight: FontWeight.w600,
                     ),
+                    textAlign: TextAlign.center,
                   ),
                 ),
               );
+              break;
 
             case 'allowSelection':
-              if (!(buttonsCfg.allowSelection) || widget.onAllowSelection == null) {
-                return const SizedBox.shrink();
-              }
-              return Padding(
-                padding: const EdgeInsets.only(left: 8),
-                child: OutlinedButton(
-                  onPressed: widget.onAllowSelection,
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: fontColor,
-                    side: BorderSide(color: fontColor.withOpacity(0.5), width: 1.5),
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 14,
-                      horizontal: 24,
-                    ),
+              button = OutlinedButton(
+                onPressed: widget.onAllowSelection,
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: fontColor,
+                  side: BorderSide(color: fontColor.withOpacity(0.5), width: 1.5),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 12,
+                    horizontal: 8,
                   ),
+                  minimumSize: const Size(0, 44),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                ),
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
                   child: Text(
                     widget.design.allowSelectionButtonLabel,
                     style: TextStyle(
+                      fontSize: 12,
                       fontFamily: widget.design.fontFamily,
                       fontWeight: FontWeight.w600,
                     ),
+                    textAlign: TextAlign.center,
                   ),
                 ),
               );
+              break;
 
             case 'allowAll':
-              if (!(buttonsCfg.allowAll)) return const SizedBox.shrink();
-              return Padding(
-                padding: const EdgeInsets.only(left: 8),
-                child: ElevatedButton(
-                  onPressed: widget.onAcceptAll,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: buttonColor,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 14,
-                      horizontal: 24,
-                    ),
+              button = ElevatedButton(
+                onPressed: widget.onAcceptAll,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: buttonColor,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 12,
+                    horizontal: 8,
                   ),
+                  minimumSize: const Size(0, 44),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                ),
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
                   child: Text(
                     widget.design.allowAllButtonLabel,
                     style: TextStyle(
+                      fontSize: 12,
                       fontFamily: widget.design.fontFamily,
                       fontWeight: FontWeight.w600,
                     ),
+                    textAlign: TextAlign.center,
                   ),
                 ),
               );
+              break;
 
             default:
-              return const SizedBox.shrink();
+              button = const SizedBox.shrink();
           }
+
+          return Expanded(
+            child: Padding(
+              padding: EdgeInsets.only(right: isLast ? 0 : 8),
+              child: button,
+            ),
+          );
         }).toList(),
       ),
     );
