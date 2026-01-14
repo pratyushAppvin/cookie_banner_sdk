@@ -176,7 +176,7 @@ class CookieBannerApiClient {
     required int domainId,
   }) async {
     try {
-      final url = Uri.parse('$baseUrl/ucm/v2/domain/languages').replace(
+      final url = Uri.parse('$baseUrl/ucm/cp').replace(
         queryParameters: {
           'domain_id': domainId.toString(),
         },
@@ -186,7 +186,45 @@ class CookieBannerApiClient {
       final response = await httpClient!.get(url);
 
       if (response.statusCode == 200) {
-        final List<dynamic> jsonList = jsonDecode(response.body) as List;
+        final decoded = jsonDecode(response.body);
+
+        print('📦 Languages Response type: ${decoded.runtimeType}');
+
+        List<dynamic> jsonList;
+
+        // Handle different response formats:
+        // 1. Direct array: [...]
+        // 2. Nested in result.data: {"success": true, "result": {"data": [...]}}
+        // 3. Direct data property: {"data": [...]}
+
+        if (decoded is List) {
+          // Format 1: Direct array
+          jsonList = decoded;
+          print('   Format: Direct array with ${jsonList.length} items');
+        } else if (decoded is Map<String, dynamic>) {
+          // Check for nested result.data structure
+          final result = decoded['result'];
+          if (result is Map<String, dynamic> && result['data'] is List) {
+            // Format 2: Nested in result.data
+            jsonList = result['data'] as List;
+            print('   Format: Nested result.data with ${jsonList.length} items');
+          } else if (decoded['data'] is List) {
+            // Format 3: Direct data property
+            jsonList = decoded['data'] as List;
+            print('   Format: Direct data property with ${jsonList.length} items');
+          } else {
+            throw CookieBannerApiException(
+              'Unexpected languages response format: ${decoded.runtimeType}',
+              null,
+            );
+          }
+        } else {
+          throw CookieBannerApiException(
+            'Unexpected languages response format: ${decoded.runtimeType}',
+            null,
+          );
+        }
+
         return jsonList
             .map((json) => Language.fromJson(json as Map<String, dynamic>))
             .toList();
@@ -216,6 +254,8 @@ class CookieBannerApiClient {
     try {
       final url = Uri.parse('$baseUrl/ucm/banner/record-status-update');
 
+      print('🔄 Consent Update API URL: $url');
+
       final body = {
         'domain_id': snapshot.domainId,
         'subject_identity': snapshot.subjectIdentity,
@@ -228,11 +268,16 @@ class CookieBannerApiClient {
         if (deviceInfo != null) 'device_info': deviceInfo.toJson(),
       };
 
+      print('📤 Request Body: ${jsonEncode(body)}');
+
       final response = await httpClient!.put(
         url,
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(body),
       );
+
+      print('📥 Response Status: ${response.statusCode}');
+      print('📥 Response Body: ${response.body}');
 
       if (response.statusCode < 200 || response.statusCode >= 300) {
         throw CookieBannerApiException(
@@ -241,6 +286,7 @@ class CookieBannerApiClient {
         );
       }
     } catch (e) {
+      print('❌ Consent update error: $e');
       throw CookieBannerApiException('Consent update error: $e', null);
     }
   }

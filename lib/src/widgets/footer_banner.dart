@@ -119,9 +119,21 @@ class FooterBanner extends StatelessWidget {
                             textColor: textColor,
                             dropdownColor: backgroundColor,
                           ),
-                        SizedBox(width: 10,),
-                        if(design.allowBannerClose)
-                          Icon(Icons.close, color: Colors.black,),
+                        if (design.showLanguageDropdown && availableLanguages.isNotEmpty && design.allowBannerClose)
+                          const SizedBox(width: 10),
+                        // Close button (follows Reject All functionality)
+                        if (design.allowBannerClose)
+                          IconButton(
+                            onPressed: onRejectAll,
+                            icon: Icon(
+                              Icons.close,
+                              color: textColor,
+                              size: 24,
+                            ),
+                            tooltip: 'Close',
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                          ),
                       ],
                     ),
                   ),
