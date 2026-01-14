@@ -1,5 +1,9 @@
+import 'package:cookie_banner_sdk/src/models/consent_snapshot.dart';
+import 'package:cookie_banner_sdk/src/services/shared_preferences_consent_storage.dart';
+import 'package:cookie_banner_sdk/src/utils/consent_evaluator.dart';
 import 'package:flutter/material.dart';
-import 'package:cookie_banner_sdk/cookie_banner_sdk.dart';
+
+import 'cookie_banner.dart';
 
 void main() {
   runApp(const MyApp());

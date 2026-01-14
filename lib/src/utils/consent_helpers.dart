@@ -178,33 +178,37 @@ class ConsentHelpers {
     required ConsentSnapshot? storedSnapshot,
     required UserDataProperties? currentData,
   }) {
-    if (storedSnapshot == null) {
-      return true; // No consent stored
-    }
-
-    if (currentData == null) {
-      return false; // Can't determine without data
-    }
-
-    // Check version change
-    final currentVersion = currentData.consentVersion ?? 1;
-    if (storedSnapshot.hasVersionChanged(currentVersion)) {
-      return true;
-    }
-
-    // Check for new cookies
-    final currentCookies = <String>[];
-    for (final category in currentData.categoryConsentRecord) {
-      for (final cookie in category.getAllCookies()) {
-        currentCookies.add(cookie.cookieId.toString());
-      }
-    }
-
-    if (storedSnapshot.hasNewCookies(currentCookies)) {
-      return true;
-    }
-
-    return false;
+    // Always show the banner on app restart
+    return true;
+    
+    // Previous logic (commented out for reference):
+    // if (storedSnapshot == null) {
+    //   return true; // No consent stored
+    // }
+    //
+    // if (currentData == null) {
+    //   return false; // Can't determine without data
+    // }
+    //
+    // // Check version change
+    // final currentVersion = currentData.consentVersion ?? 1;
+    // if (storedSnapshot.hasVersionChanged(currentVersion)) {
+    //   return true;
+    // }
+    //
+    // // Check for new cookies
+    // final currentCookies = <String>[];
+    // for (final category in currentData.categoryConsentRecord) {
+    //   for (final cookie in category.getAllCookies()) {
+    //     currentCookies.add(cookie.cookieId.toString());
+    //   }
+    // }
+    //
+    // if (storedSnapshot.hasNewCookies(currentCookies)) {
+    //   return true;
+    // }
+    //
+    // return false;
   }
 
   /// Initialize category consent from stored snapshot and API data.

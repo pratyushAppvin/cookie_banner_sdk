@@ -1,6 +1,6 @@
 import 'dart:io';
-import 'package:flutter/widgets.dart';
 import 'package:device_info_plus/device_info_plus.dart';
+import 'package:flutter/widgets.dart';
 import '../models/device_info.dart';
 
 /// Service to collect comprehensive device and platform information

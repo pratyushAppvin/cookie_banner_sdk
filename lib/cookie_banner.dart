@@ -1,17 +1,19 @@
+import 'package:cookie_banner_sdk/src/models/banner_design.dart';
+import 'package:cookie_banner_sdk/src/models/consent_snapshot.dart';
+import 'package:cookie_banner_sdk/src/models/models.dart';
+import 'package:cookie_banner_sdk/src/services/consent_storage.dart';
+import 'package:cookie_banner_sdk/src/services/cookie_banner_api_client.dart';
+import 'package:cookie_banner_sdk/src/services/device_info_collector.dart';
+import 'package:cookie_banner_sdk/src/services/shared_preferences_consent_storage.dart';
+import 'package:cookie_banner_sdk/src/utils/consent_helpers.dart';
+import 'package:cookie_banner_sdk/src/utils/dnt_helper.dart';
+import 'package:cookie_banner_sdk/src/utils/uuid_helper.dart';
+import 'package:cookie_banner_sdk/src/widgets/consent_preferences_dialog.dart';
+import 'package:cookie_banner_sdk/src/widgets/floating_logo.dart';
+import 'package:cookie_banner_sdk/src/widgets/footer_banner.dart';
+import 'package:cookie_banner_sdk/src/widgets/skeleton_loaders.dart';
+import 'package:cookie_banner_sdk/src/widgets/wall_banner.dart';
 import 'package:flutter/material.dart';
-import 'src/models/models.dart';
-import 'src/services/consent_storage.dart';
-import 'src/services/shared_preferences_consent_storage.dart';
-import 'src/services/cookie_banner_api_client.dart';
-import 'src/services/device_info_collector.dart';
-import 'src/utils/uuid_helper.dart';
-import 'src/utils/consent_helpers.dart';
-import 'src/utils/dnt_helper.dart';
-import 'src/widgets/footer_banner.dart';
-import 'src/widgets/wall_banner.dart';
-import 'src/widgets/floating_logo.dart';
-import 'src/widgets/skeleton_loaders.dart';
-import 'src/widgets/consent_preferences_dialog.dart';
 
 /// Main cookie banner widget for GDPR/CCPA compliance.
 ///
