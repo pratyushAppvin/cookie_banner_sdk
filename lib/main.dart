@@ -72,6 +72,7 @@ class _CookieBannerDemoPageState extends State<CookieBannerDemoPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        centerTitle: true,
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: const Text('Cookie Banner Demo'),
         elevation: 2,

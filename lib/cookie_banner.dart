@@ -380,6 +380,9 @@ class _CookieBannerState extends State<CookieBanner> {
     setState(() {
       _isVisible = false;
       _showFloatingLogo = _shouldShowFloatingLogo();
+      // print('🔄 State updated after Accept All:');
+      // print('  - _isVisible: $_isVisible');
+      // print('  - _showFloatingLogo: $_showFloatingLogo');
     });
   }
 
@@ -402,6 +405,9 @@ class _CookieBannerState extends State<CookieBanner> {
     setState(() {
       _isVisible = false;
       _showFloatingLogo = _shouldShowFloatingLogo();
+      // print('🔄 State updated after Reject All:');
+      // print('  - _isVisible: $_isVisible');
+      // print('  - _showFloatingLogo: $_showFloatingLogo');
     });
   }
 
@@ -410,7 +416,14 @@ class _CookieBannerState extends State<CookieBanner> {
 
     _performanceMetrics.markUserInteraction();
 
-    // Show the consent preferences dialog
+    // For wall layout, just keep the banner open - it already has the details
+    final design = widget.overrideDesign ?? _userData?.bannerConfiguration.bannerDesign;
+    if (design?.layoutType == 'wall') {
+      // Wall banner already shows all the options, no need for separate dialog
+      return;
+    }
+
+    // For footer layout, show the consent preferences dialog
     await showDialog(
       context: context,
       barrierDismissible: false,
@@ -462,6 +475,9 @@ class _CookieBannerState extends State<CookieBanner> {
 
     // Save to storage
     await _storage.saveConsent(snapshot);
+    
+    // Update stored consent in memory so floating logo logic works
+    _storedConsent = snapshot;
 
     // Build API consent payload
     final cookieConsents = <CookieConsent>[];
@@ -498,9 +514,16 @@ class _CookieBannerState extends State<CookieBanner> {
     final design = widget.overrideDesign ?? _userData?.bannerConfiguration.bannerDesign;
     if (design == null) return false;
     
+    // Show floating logo if:
+    // 1. Logo is enabled in design
+    // 2. Logo URL is not empty
+    // 3. Banner is not currently visible
+    // 4. User has given consent at least once (consent exists in storage)
     return design.showLogo == 'true' && 
+    // Tapping floating logo reopens the banner to change preferences
            design.logoUrl.isNotEmpty &&
-           !_isVisible;
+           !_isVisible &&
+           _storedConsent != null;
   }
 
   void _handleLogoTap() {
@@ -510,12 +533,9 @@ class _CookieBannerState extends State<CookieBanner> {
     });
   }
 
-  void _handleBannerClose() {
-    // Close banner without saving (only if allowBannerClose is true)
-    setState(() {
-      _isVisible = false;
-      _showFloatingLogo = _shouldShowFloatingLogo();
-    });
+  Future<void> _handleBannerClose() async {
+    // Close banner triggers Reject All behavior
+    await _handleRejectAll();
   }
 
   @override
@@ -533,6 +553,13 @@ class _CookieBannerState extends State<CookieBanner> {
 
     final design = widget.overrideDesign ?? 
                    _userData!.bannerConfiguration.bannerDesign;
+
+    // print('🏗️ CookieBanner building:');
+    // print('   _isVisible: $_isVisible');
+    // print('   _showFloatingLogo: $_showFloatingLogo');
+    // print('   design.showLogo: ${design.showLogo}');
+    // print('   design.logoUrl: ${design.logoUrl}');
+    // print('   Condition met: ${_showFloatingLogo && design.showLogo == 'true' && design.logoUrl.isNotEmpty}');
 
     return Stack(
       children: [

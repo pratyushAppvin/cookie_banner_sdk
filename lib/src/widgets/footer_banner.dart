@@ -91,7 +91,7 @@ class FooterBanner extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Header row with logo and language selector
-                if (design.showLogo == 'true' && design.logoUrl.isNotEmpty || 
+                if (design.showLogo == "true" && design.logoUrl.isNotEmpty ||
                     design.showLanguageDropdown)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 12),
@@ -99,7 +99,7 @@ class FooterBanner extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.start,
                       children: [
                         // Logo
-                        if (design.showLogo == 'true' && design.logoUrl.isNotEmpty)
+                        if (design.showLogo == "true" && design.logoUrl.isNotEmpty)
                           Padding(
                             padding: const EdgeInsets.only(right: 12),
                             child: Image.network(

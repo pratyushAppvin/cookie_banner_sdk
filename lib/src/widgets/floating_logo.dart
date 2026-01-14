@@ -38,10 +38,21 @@ class _FloatingLogoState extends State<FloatingLogo> {
     // Set default position after we have MediaQuery
     if (widget.initialPosition == null) {
       final size = MediaQuery.of(context).size;
+      final padding = MediaQuery.of(context).padding; // Safe area insets
+      
+      // Calculate usable screen area (excluding system UI)
+      final usableHeight = size.height - padding.top - padding.bottom;
+      
+      // Position in bottom-right, accounting for safe areas
       _position = Offset(
         size.width - widget.width - 16,
-        size.height - widget.height - 80,
+        usableHeight - widget.height - 80, // Use usable height, not full screen height
       );
+      // print('🎯 FloatingLogo positioned at: (${_position.dx}, ${_position.dy})');
+      // print('   Screen size: ${size.width} x ${size.height}');
+      // print('   Safe area padding: top=${padding.top}, bottom=${padding.bottom}');
+      // print('   Usable height: $usableHeight');
+      // print('   Logo size: ${widget.width} x ${widget.height}');
     }
   }
 
@@ -80,6 +91,10 @@ class _FloatingLogoState extends State<FloatingLogo> {
 
   @override
   Widget build(BuildContext context) {
+    // print('🎨 FloatingLogo building at position: (${_position.dx}, ${_position.dy})');
+    // print('   Logo URL: ${widget.logoUrl}');
+    // print('   Size: ${widget.width} x ${widget.height}');
+    
     return Positioned(
       left: _position.dx,
       top: _position.dy,
